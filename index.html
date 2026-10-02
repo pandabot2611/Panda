@@ -318,9 +318,13 @@ button,input,textarea{font-family:'Manrope',system-ui,-apple-system,sans-serif !
 try{Telegram.WebApp.ready();Telegram.WebApp.expand()}catch(e){}
 var FARM_MS=8*3600*1000,FARM_GAIN=63.36,TK_DAY=7,DUR=30;
 var S={email:"",name:"",uname:"",ref:"",bal:0,tk:7,day:"",streak:0,fs:0,games:0,farms:0,best:0,tot:0,tc:{},ts:{},wd:[]};
-try{var r0=localStorage.getItem("panda2");if(r0)S=Object.assign(S,JSON.parse(r0))}catch(e){}
+var API="https://kxhoeozznesohkarndma.supabase.co/functions/v1/api",KEY="sb_publishable_0tmVbo7OoLg6_rkwI0EVyA_GGLZh3Nx",TGD="",SREF="",SOFF=0,busy=0;
+try{TGD=Telegram.WebApp.initData||"";SREF=Telegram.WebApp.initDataUnsafe.start_param||""}catch(e){}
+function api(a,x){var o={action:a,initData:TGD,ref:SREF};for(var k in x||{})o[k]=x[k];return fetch(API,{method:"POST",headers:{"Content-Type":"application/json",apikey:KEY},body:JSON.stringify(o)}).then(function(r){return r.json()}).catch(function(){return{ok:false,error:"net"}})}
+function apply(d){var p=d.player;SOFF=d.serverTime-Date.now();S.uname=p.username||"";S.bal=Number(p.balance);S.tot=Number(p.total_earned);S.tk=p.tricks;S.streak=p.streak;S.day=p.last_checkin||"";S.fs=p.farm_start?new Date(p.farm_start).getTime()-SOFF:0;S.games=p.games;S.farms=p.farms;S.best=p.best_score;S.tc={};(d.claimed||[]).forEach(function(i){S.tc[i]=1});S.rank=d.rank}
+function neterr(){toast("Connection problem. Try again.")}
 function $(i){return document.getElementById(i)}
-function save(){try{localStorage.setItem("panda2",JSON.stringify(S))}catch(e){}}
+function save(){}
 function fmt(n){return Math.floor(n).toLocaleString("en-US")}
 function toast(t){var el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(function(){el.classList.remove("on")},2300)}
 var AC=null;function snd(f,d,ty,v){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();o.type=ty||"sine";o.frequency.setValueAtTime(f,AC.currentTime);g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
@@ -340,15 +344,15 @@ document.querySelectorAll("nav button").forEach(function(b){b.onclick=function()
 // ---- daily check-in splash ----
 var BOLT='<svg viewBox="0 0 100 130" width="100%"><defs><linearGradient id="bg1" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#fffbb8"/><stop offset=".5" stop-color="#ffe44d"/><stop offset="1" stop-color="#f2b200"/></linearGradient></defs><polygon points="64,4 20,70 46,70 32,126 86,50 58,50 78,4" fill="url(#bg1)" stroke="#c48a00" stroke-width="2.500" stroke-linejoin="round"/><polygon points="62,10 30,64 50,64 44,92 64,48 46,48 66,10" fill="#fff" opacity=".45"/><path d="M10 84C-2 68 26 58 56 64" fill="none" stroke="#cfeaff" stroke-width="3.500" stroke-linecap="round"/><path d="M72 22c11-6 15 14 4 26" fill="none" stroke="#d6ecff" stroke-width="2" stroke-linecap="round" opacity=".85"/></svg>';
 var TKS='<svg viewBox="0 0 90 66"><path d="M8 2h74a6 6 0 0 1 6 6v14a9 9 0 0 0 0 22v14a6 6 0 0 1-6 6H8a6 6 0 0 1-6-6V44a9 9 0 0 0 0-22V8a6 6 0 0 1 6-6z" fill="#ee5b86"/><rect x="11" y="9" width="68" height="48" rx="4" fill="none" stroke="#f9a9c1" stroke-width="1.500" stroke-dasharray="3 2"/><text x="45" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#a6254c" font-family="Pixelify Sans,monospace">ADMIT</text><text x="45" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#a6254c" font-family="Pixelify Sans,monospace">ONE</text></svg>';
-function checkin(force){var td=new Date().toDateString();if(!force&&S.day===td)return;var y=new Date(Date.now()-864e5).toDateString(),st=force?Math.max(1,S.streak):(S.day===y?S.streak+1:1),pts=20+Math.min(st-1,5)*10,pas=7,sp=$("sp");
+function checkin(force,rw){var st=force?Math.max(1,S.streak):rw.streak,pts=force?20+Math.min(st-1,5)*10:rw.pts,pas=7,sp=$("sp");
  sp.style.display="flex";sp.innerHTML='<div class="sc1 sc0"><div class="big pop">'+st+'</div><div class="pop dci">day check-in</div></div><p class="dcn">Check-ins are your best friend here. Keep them going for bonuses that are straight \u{1F525}</p>';
  setTimeout(function(){sp.innerHTML='<div class="sc1"><div class="dre pop">'+BOLT+'</div><h2 class="drt pop">Your daily rewards</h2><div class="rw2 pop"><div class="rc2"><div class="ri">'+LOGO+'</div><b>'+pts+'</b><small>Panda Points</small></div><div class="rc2"><div class="ri">'+TKS+'</div><b>'+pas+'</b><small>Play Tricks</small></div></div><p class="dcn2">Come back tomorrow for check-in day '+(st+1)+'<br>Tip: Skipping a day resets your check-in.</p></div><button class="btn w" id="cont">Continue</button>';
-  $("cont").onclick=function(){if(!force){S.streak=st;S.day=td;S.tk=7;S.bal+=pts;S.tot+=pts;save()}snd(700,.3);vib(20);sp.style.opacity=0;sp.style.transition="opacity .3s";setTimeout(function(){sp.style.display="none";sp.style.opacity=1;refresh()},300)}},1700)}
+  $("cont").onclick=function(){snd(700,.3);vib(20);sp.style.opacity=0;sp.style.transition="opacity .3s";setTimeout(function(){sp.style.display="none";sp.style.opacity=1;refresh()},300)}},1700)}
 
 // ---- farming (8 hours) ----
 function acc(){if(!S.fs)return 0;return FARM_GAIN*Math.min(1,(Date.now()-S.fs)/FARM_MS)}
 function tl(ms){var s=Math.ceil(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h+"h "+m+"m"}
-$("fm").onclick=function(){if(!S.fs){S.fs=Date.now();snd(520,.2);vib(15)}else if(Date.now()-S.fs>=FARM_MS){S.bal+=FARM_GAIN;S.tot+=FARM_GAIN;S.fs=0;S.farms++;snd(820,.3);vib(30);toast("You've got "+FARM_GAIN.toFixed(3)+" PP")}save()};
+$("fm").onclick=function(){if(busy)return;busy=1;var cl=S.fs&&Date.now()-S.fs>=FARM_MS;api("farm").then(function(d){busy=0;if(d.ok){apply(d);snd(cl?820:520,.3);vib(20);if(cl)toast("You've got "+FARM_GAIN.toFixed(3)+" PP")}else if(d.error=="early")toast("Not ready yet");else neterr()})};
 
 // ---- tasks ----
 var LINK=function(id,ic,n,r,l){return{id:id,ic:ic,n:n,r:r,l:l}};
@@ -368,7 +372,7 @@ function tasks(){var h='<div class="th"><div class="thl">'+LOGO+'</div><h2>'+lef
  $("tl").innerHTML=h}
 $("tl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b||b.disabled)return;var id=b.dataset.id,all=SOC.concat(LRN),o=all.filter(function(x){return x.id==id})[0];
  if(b.dataset.a=="s"){S.ts[id]=Date.now();try{window.open(o.l,"_blank")}catch(x){}save();tasks();setTimeout(function(){if($("tasks").classList.contains("on"))tasks()},5100);vib(10)}
- else{var r=o?o.r:MIL.filter(function(m){return m[0]==id})[0][3];S.tc[id]=1;S.bal+=r;S.tot+=r;save();snd(760,.25);vib(25);toast("You've got "+fmt(r)+" PP");tasks()}});
+ else{if(busy)return;busy=1;api("task",{task:id}).then(function(d){busy=0;if(d.ok){apply(d);snd(760,.25);vib(25);toast("You've got "+fmt(d.reward)+" PP")}else if(d.error=="claimed"){api("state").then(function(x){if(x.ok)apply(x);tasks()})}else if(d.error=="notyet")toast("Not completed yet");else neterr();tasks()})}});
 
 // ---- wallet ----
 
@@ -397,7 +401,8 @@ addEventListener("resize",function(){if(G)size()});
 // Blum-like tap sound: short bright blip (1.5-3 kHz), pitch climbs with streak
 var SC=[1568,1760,1976,2093,2349,2637,2794];
 function sfx(f,v){if(S.mute)return;var n=performance.now();if(n-lastSfx<30)return;lastSfx=n;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var t=AC.currentTime,o=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain();o.type="sine";o2.type="triangle";o.frequency.setValueAtTime(f*.9,t);o.frequency.exponentialRampToValueAtTime(f,t+.03);o2.frequency.setValueAtTime(f*2,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.13,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+.1);o.connect(g);o2.connect(g);g.connect(AC.destination);o.start(t);o2.start(t);o.stop(t+.11);o2.stop(t+.11)}catch(e){}}
-function start(){if(S.tk<1)return toast("No Play Tricks left today");S.tk--;save();size();$("gw").style.display="block";$("res").style.display="none";$("gs").innerHTML=MG+' <span id="gsn">0</span>';hT="";hS=-1;hF=0;
+function start(){if(S.tk<1)return toast("No Play Tricks left today");if(busy)return;busy=1;api("play_start").then(function(d){busy=0;if(d.ok){apply(d);begin()}else if(d.error=="notricks")toast("No Play Tricks left today");else neterr()})}
+function begin(){size();$("gw").style.display="block";$("res").style.display="none";$("gs").innerHTML=MG+' <span id="gsn">0</span>';hT="";hS=-1;hF=0;
  G={t:DUR,sc:0,it:[],pa:[],fl:[],sp:0,fz:0,sh:0,fx:0,el:0,cb:0,lastHit:0};lt=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);snd(500,.15);refresh()}
 function spawn(){var r=Math.random(),k=r<.05?"c":r<.065?"d":r<.25?"w":"a",q=Math.random(),sz=k=="c"||k=="d"?W*.095:W*(.065+q*.048);G.it.push({x:sz/2+Math.random()*(W-sz),y:-sz,sz:sz,vy:(220+Math.random()*170+sz*1.6)*(1+G.el*.004),k:k,ph:Math.random()*6})}
 function pop(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.283,sp=60+Math.random()*120;G.pa.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:.35,c:c})}}
@@ -427,7 +432,8 @@ function loop(n){if(!G)return;var dt=Math.min(.04,(n-lt)/1000);lt=n;
  X.globalAlpha=1;if(G.fx>0){X.fillStyle="rgba(255,60,60,"+G.fx*.3+")";X.fillRect(0,0,W,H)}
  var tt=Math.max(0,Math.ceil(G.t)),ts="00:"+(tt<10?"0":"")+tt;if(ts!==hT){hT=ts;$("gt").textContent=ts}if(G.sc!==hS){hS=G.sc;$("gsn").textContent=G.sc}var fz=G.fz>0?1:0;if(fz!==hF){hF=fz;$("gt").className=fz?"fz":""}
  if(G.t<=0){end();return}raf=requestAnimationFrame(loop)}
-function end(){var sc=G.sc;G=null;X.setTransform(1,0,0,1,0,0);S.bal+=sc;S.tot+=sc;S.games++;S.best=Math.max(S.best,sc);save();$("rs").textContent="+"+sc;$("res").style.display="flex";$("again").disabled=S.tk<1;$("again").textContent=S.tk<1?"No Play Tricks left":"Play again ("+S.tk+" tricks)";snd(600,.4);refresh()}
+function end(){var sc=G.sc;G=null;X.setTransform(1,0,0,1,0,0);$("rs").textContent="+"+sc;$("res").style.display="flex";$("again").disabled=true;$("again").textContent="Saving...";snd(600,.4);
+ api("play_end",{score:sc}).then(function(d){if(d.ok)apply(d);else toast("Score could not be saved");$("again").disabled=S.tk<1;$("again").textContent=S.tk<1?"No Play Tricks left":"Play again ("+S.tk+" tricks)";refresh()})}
 cv.addEventListener("pointerdown",function(e){e.preventDefault();down=true;if(G)hit(e.clientX,e.clientY)});
 cv.addEventListener("pointermove",function(e){if(down&&G){hit(e.clientX,e.clientY)}});
 addEventListener("pointerup",function(){down=false});
@@ -438,23 +444,29 @@ function onboard(cb){var ob=$("ob"),tg=null;try{var q=new URLSearchParams(locati
  if(S.uname){cb();return}ob.style.display="flex";
  var pre=tg?String(tg.username||tg.first_name||"").replace(/[^A-Za-z0-9_]/g,"").slice(0,16):"";
  ob.innerHTML='<div style="width:90px" class="pop">'+LOGO+'</div><h2 class="pop" style="font-size:28px;margin:16px 0 6px">Welcome to Panda</h2>'+(S.ref?'<p class="sub">Invited by '+S.ref.replace(/[<>&"]/g,"")+'</p>':'')+'<input id="un2" maxlength="16" placeholder="Choose a username" autocomplete="off" autocapitalize="off" value="'+pre+'" style="margin-top:12px"><p class="sub" style="align-self:flex-start;text-align:left">Your username is shown in the app.</p><button class="btn w" id="jw" style="width:100%;padding:15px;margin-top:auto">Continue</button>';
- $("jw").onclick=function(){var u=$("un2").value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(u))return toast("Username: 3-16 letters, numbers or _");this.innerHTML='<span class="sp dk"></span>';setTimeout(function(){S.uname=u;save();setProf();
+ $("jw").onclick=function(){var u=$("un2").value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(u))return toast("Username: 3-16 letters, numbers or _");if(busy)return;busy=1;var b=this;b.innerHTML='<span class="sp dk"></span>';
+  api("set_username",{username:u}).then(function(d){busy=0;if(!d.ok){b.textContent="Continue";toast(d.error=="taken"?"This username is already taken":d.error=="badname"?"Username: 3-16 letters, numbers or _":"Connection problem. Try again.");return}apply(d);setProf();
   ob.innerHTML='<div style="width:90px" class="pop">'+LOGO+'</div><h2 class="pop" style="font-size:28px;margin:16px 0 6px">You\'re in, '+u+'!</h2><p class="sub" style="max-width:290px;font-size:15px">Enter Panda and start farming.</p><button class="btn w" id="en" style="width:100%;padding:15px;margin-top:auto">Enter Panda</button>';
-  $("en").onclick=function(){ob.style.display="none";cb()}},500)}}
+  $("en").onclick=function(){ob.style.display="none";cb()}})}}
 $("un").onclick=function(){S.uname="";onboard(function(){setProf()})};
 var rcf=0;
 $("mn").onclick=function(e){e.stopPropagation();$("mnu").classList.toggle("on")};
 document.addEventListener("click",function(e){if(!e.target.closest("#mnu"))$("mnu").classList.remove("on")});
 $("mp").onclick=function(){$("mnu").classList.remove("on");checkin(true)};
 $("mr").onclick=function(e){e.stopPropagation();if(!rcf){rcf=1;this.textContent="Tap again to confirm";setTimeout(function(){rcf=0;$("mr").textContent="Reset all data"},3000);return}try{localStorage.removeItem("panda2")}catch(x){}location.reload()};
-function invLink(){return "https://t.me/YourBot?start=ref_"+encodeURIComponent(S.uname||"demo")}
-function invUpd(){$("invb").textContent="Invite a fren ("+S.invLeft+" left)"}
+function invLink(){var id="";try{id=Telegram.WebApp.initDataUnsafe.user.id}catch(e){}return "https://t.me/PandaCryptosBot/panda?startapp=ref_"+id}
+$("mr").style.display="none";
+function invUpd(){$("invb").textContent="Invite a fren"}
 function shut(){$("sheet").classList.remove("on")}
 $("invb").onclick=function(){$("sheet").classList.add("on");vib(8)};
 $("sClose").onclick=shut;$("sx").onclick=shut;$("sheet").addEventListener("click",function(e){if(e.target===this)shut()});
 $("sCopy").onclick=function(){try{navigator.clipboard.writeText(invLink());toast("Link copied")}catch(e){toast("Press and hold to copy the link")}shut()};
-$("sSend").onclick=function(){var l=invLink();if(navigator.share){navigator.share({title:"Panda",text:"Join me on Panda!",url:l}).catch(function(){})}else{try{navigator.clipboard.writeText(l);toast("Link copied")}catch(e){}}if(S.invLeft>0){S.invLeft--;save();invUpd()}shut()};
+$("sSend").onclick=function(){var l=invLink();if(navigator.share){navigator.share({title:"Panda",text:"Join me on Panda!",url:l}).catch(function(){})}else{try{navigator.clipboard.writeText(l);toast("Link copied")}catch(e){}}shut()};
 invUpd();
-$("fm").classList.add("on");refresh();setProf();onboard(function(){setProf();checkin()});requestAnimationFrame(ui);
+$("fm").classList.add("on");refresh();setProf();function blocked(t,m){var ob=$("ob");ob.style.display="flex";ob.innerHTML='<div style="width:90px">'+LOGO+'</div><h2 style="font-size:26px;margin:16px 0 6px">'+t+'</h2><p class="sub" style="max-width:290px;font-size:15px">'+m+'</p><button class="btn w" id="rt" style="width:100%;padding:15px;margin-top:auto">'+(TGD?"Try again":"Open in Telegram")+'</button>';$("rt").onclick=function(){if(TGD)boot();else window.open("https://t.me/PandaCryptosBot","_blank")}}
+function boot(){var ob=$("ob");ob.style.display="flex";ob.innerHTML='<div style="width:90px">'+LOGO+'</div><p class="sub" style="margin-top:20px">Loading...</p>';
+ if(!TGD){blocked("Open Panda in Telegram","Your points are saved on our server. Please open the game from the Telegram bot.");return}
+ api("state").then(function(d){if(!d.ok){blocked("Can't connect","Check your internet and try again.");return}apply(d);ob.style.display="none";setProf();onboard(function(){setProf();api("checkin").then(function(c){if(c.ok){apply(c);checkin(false,c.reward)}})})})}
+boot();requestAnimationFrame(ui);
 })();
 </script></body></html>
